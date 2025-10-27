@@ -27,3 +27,34 @@ bin/
 
 ### Mac OS ###
 .DS_Store
+
+### IntelliJ IDEA ###
+.idea/
+out/
+*.iml
+
+
+### Build directories ###
+bin/
+out/
+target/
+build/
+
+### Compiled class files ###
+*.class
+
+
+
+### Log and output files ###
+output.txt
+
+
+### Backup and temporary files ###
+*.log
+*.tmp
+*.swp
+*~
+
+### Gradle / Maven (if auto-added by IntelliJ)
+.gradle/
+.mvn/
