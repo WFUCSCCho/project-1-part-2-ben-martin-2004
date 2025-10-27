@@ -7,6 +7,7 @@
 
 import java.io.*;
 import java.util.Scanner;
+import java.util.Arrays;
 
 public class Parser
 {
@@ -17,7 +18,6 @@ public class Parser
     public Parser(String filename) throws FileNotFoundException
     {
         // Clear the output file before processing commands
-        System.out.println("Working directory: " + new File(".").getAbsolutePath());
         clearFile("output.txt");
         process(new File(filename));
     }
@@ -74,9 +74,24 @@ public class Parser
                     return;
                 }
 
-                String title = command[1].trim();
-                boolean found = mybst.search(new HorrorMovie(title, 0.0));
-                writeToFile(found ? "found " + title : "search failed", "output.txt");
+                // Combine tokens after "search" into one title string
+                String title = String.join(" ", Arrays.copyOfRange(command, 1, command.length)).trim();
+
+                // Normalize (remove quotes and punctuation)
+                String normalized = title.replaceAll("[\"',.?!]", "").trim().toLowerCase();
+
+                boolean found = false;
+                for (HorrorMovie m : mybst)
+                {
+                    String movieTitle = m.title().replaceAll("[\"',.?!]", "").trim().toLowerCase();
+                    if (movieTitle.equals(normalized))
+                    {
+                        found = true;
+                        break;
+                    }
+                }
+
+                writeToFile(found ? "found " + title : "not found", "output.txt");
             }
 
             default ->
@@ -92,24 +107,26 @@ public class Parser
         try (BufferedReader br = new BufferedReader(new FileReader(csvPath)))
         {
             String line = br.readLine(); // skip header
+            int count = 0;
 
             while ((line = br.readLine()) != null)
             {
-                // Properly split CSV line while respecting quoted commas
-                String[] cols = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+                // Split safely
+                String[] cols = line.split(",");
 
                 // Defensive parsing in case of missing values
-                String title = cols.length > 2 ? cols[2].replace("\"", "").trim() : "";
-                double rating = parseDoubleSafe(cols, 10);
+                String title = cols.length > 2 ? cols[2].trim() : "";
+                double rating = parseDoubleSafe(cols, 10); // Using column 11 (index 10)
 
-                // Skip empty titles or zero ratings
-                if (title.isEmpty() || rating == 0.0) continue;
-
-                HorrorMovie movie = new HorrorMovie(title, rating);
-                mybst.insert(movie);
+                if (!title.isEmpty())
+                {
+                    HorrorMovie movie = new HorrorMovie(title, rating);
+                    mybst.insert(movie);
+                    count++;
+                }
             }
 
-            writeToFile("CSV Loaded: " + csvPath, "output.txt");
+            writeToFile("CSV Loaded: " + csvPath + " (" + count + " movies)", "output.txt");
         }
         catch (IOException e)
         {
